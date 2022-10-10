@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -41,6 +41,10 @@ impl Vec3 {
     pub fn unit_vector(&self) -> UnitVec3 {
         UnitVec3::new(self)
     }
+
+    pub fn inner_product(&self, v: &Self) -> f64 {
+        self.x * v.x + self.y * v.y + self.z * v.z
+    }
 }
 
 /// The type for representing 3D unit vectors (i.e. 3D vectors with their length 1)
@@ -69,7 +73,7 @@ impl UnitVec3 {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Point3 {
     pub x: f64,
     pub y: f64,
@@ -102,5 +106,101 @@ impl Ray {
     #[allow(dead_code)]
     pub fn at(&self, t: f64) -> Point3 {
         self.origin.add(&self.direction.inject().scale(t))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vec3_tests() {
+        let v1 = Vec3 {
+            x: 1.,
+            y: 2.,
+            z: 3.,
+        };
+        let v2 = Vec3 {
+            x: 2.,
+            y: 3.,
+            z: 1.,
+        };
+        assert_eq!(
+            Vec3 {
+                x: 3.,
+                y: 5.,
+                z: 4.,
+            },
+            v1.add(&v2)
+        );
+        assert_eq!(11., v1.inner_product(&v2));
+
+        let v3 = Vec3 {
+            x: 3.,
+            y: 4.,
+            z: 0.,
+        };
+        assert_eq!(
+            Vec3 {
+                x: 4.5,
+                y: 6.,
+                z: 0.
+            },
+            v3.scale(1.5)
+        );
+        assert_eq!(
+            Vec3 {
+                x: 1.5,
+                y: 2.,
+                z: 0.,
+            },
+            v3.divide(2.)
+        );
+        assert_eq!(25., v3.length_squared());
+        assert_eq!(5., v3.length());
+        assert_eq!(
+            Vec3 {
+                x: 0.6,
+                y: 0.8,
+                z: 0.,
+            },
+            v3.unit_vector().inject()
+        )
+    }
+
+    #[test]
+    fn point3_tests() {
+        let p1 = Point3 {
+            x: 1.,
+            y: 2.,
+            z: 3.,
+        };
+        let p2 = Point3 {
+            x: 2.,
+            y: 3.,
+            z: 1.,
+        };
+        assert_eq!(
+            Vec3 {
+                x: -1.,
+                y: -1.,
+                z: 2.,
+            },
+            p1.subtract(&p2)
+        );
+
+        let v = Vec3 {
+            x: 13.,
+            y: 24.,
+            z: 30.,
+        };
+        assert_eq!(
+            Point3 {
+                x: 14.,
+                y: 26.,
+                z: 33.,
+            },
+            p1.add(&v)
+        );
     }
 }

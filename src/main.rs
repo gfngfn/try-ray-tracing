@@ -4,6 +4,23 @@ mod geometry;
 use color::Color;
 use geometry::{Point3, Ray, Vec3};
 
+fn do_hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> bool {
+    // (O, d) := ray
+    // C := center
+    // r := radius
+    //
+    // v := O - C
+    // (v^T d)^2 - |v|^2 + r^2 >= 0
+
+    let origin = &ray.origin;
+    let dir = &ray.direction.inject();
+    let v = origin.subtract(center);
+
+    let b_half = v.inner_product(dir);
+    let c = v.inner_product(&v) - radius * radius;
+    b_half * b_half - c >= 0.
+}
+
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
     let t = 0.5 * (u.inject().y + 1.);
@@ -18,6 +35,24 @@ fn ray_background_color(ray: &Ray) -> Color {
         b: 1.,
     };
     white.blend(t, &sky)
+}
+
+fn ray_color(ray: &Ray) -> Color {
+    let center = Point3 {
+        x: 0.,
+        y: 0.,
+        z: -1.,
+    };
+    let radius: f64 = 0.5;
+    if do_hit_sphere(&center, radius, ray) {
+        Color {
+            r: 1.,
+            g: 0.,
+            b: 0.,
+        }
+    } else {
+        ray_background_color(ray)
+    }
 }
 
 fn main() {
@@ -46,7 +81,7 @@ fn main() {
         y: viewport_height,
         z: 0.,
     };
-    let front = Vec3 {
+    let forward = Vec3 {
         x: 0.,
         y: 0.,
         z: -focal_length,
@@ -54,13 +89,7 @@ fn main() {
     let lower_left_corner = origin
         .add(&horizontal.scale(-0.5))
         .add(&vertical.scale(-0.5))
-        .add(&front.scale(0.5));
-
-    let _v = Vec3 {
-        x: 0.,
-        y: 0.,
-        z: 0.,
-    };
+        .add(&forward);
 
     // Rendering operations:
     println!("P3");
@@ -80,7 +109,7 @@ fn main() {
                 origin: origin.clone(),
                 direction,
             };
-            let color = ray_background_color(&ray);
+            let color = ray_color(&ray);
             color.write();
         }
     }
