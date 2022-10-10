@@ -14,7 +14,6 @@ impl Vec3 {
         }
     }
 
-    #[allow(dead_code)]
     pub fn scale(&self, ratio: f64) -> Self {
         Vec3 {
             x: self.x * ratio,
@@ -23,7 +22,6 @@ impl Vec3 {
         }
     }
 
-    #[allow(dead_code)]
     pub fn divide(&self, d: f64) -> Self {
         Vec3 {
             x: self.x / d,
@@ -32,17 +30,14 @@ impl Vec3 {
         }
     }
 
-    #[allow(dead_code)]
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    #[allow(dead_code)]
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
 
-    #[allow(dead_code)]
     pub fn unit_vector(&self) -> UnitVec3 {
         UnitVec3::new(self)
     }
@@ -56,7 +51,6 @@ pub struct UnitVec3 {
     z: f64,
 }
 impl UnitVec3 {
-    #[allow(dead_code)]
     pub fn new(v: &Vec3) -> Self {
         let w = v.divide(v.length());
         Self {
@@ -82,7 +76,6 @@ pub struct Point3 {
     pub z: f64,
 }
 impl Point3 {
-    #[allow(dead_code)]
     pub fn add(&self, v: &Vec3) -> Self {
         Point3 {
             x: self.x + v.x,
@@ -90,22 +83,22 @@ impl Point3 {
             z: self.z + v.z,
         }
     }
+
+    pub fn subtract(&self, pt: &Point3) -> Vec3 {
+        Vec3 {
+            x: self.x - pt.x,
+            y: self.y - pt.y,
+            z: self.z - pt.z,
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct Ray {
-    origin: Point3,
-    direction: UnitVec3,
+    pub origin: Point3,
+    pub direction: UnitVec3,
 }
 impl Ray {
-    #[allow(dead_code)]
-    pub fn new(origin: &Point3, direction: &UnitVec3) -> Self {
-        Ray {
-            origin: origin.clone(),
-            direction: direction.clone(),
-        }
-    }
-
     #[allow(dead_code)]
     pub fn at(&self, t: f64) -> Point3 {
         self.origin.add(&self.direction.inject().scale(t))
