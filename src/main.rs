@@ -33,27 +33,8 @@ fn ray_background_color(ray: &Ray) -> Color {
     white.blend(t, &sky)
 }
 
-fn ray_color(ray: &Ray) -> Color {
-    let sphere1 = Sphere {
-        center: Point3 {
-            x: 0.,
-            y: 0.,
-            z: -1.,
-        },
-        radius: 0.5,
-    };
-    let sphere2 = Sphere {
-        center: Point3 {
-            x: 0.,
-            y: -100.5,
-            z: -1.,
-        },
-        radius: 100.,
-    };
-    let hittable_list = HittableList {
-        members: vec![Box::new(sphere1), Box::new(sphere2)],
-    };
-    if let Some(hit) = hittable_list.hit(ray) {
+fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
+    if let Some(hit) = world.hit(ray) {
         let u = hit.surface_normal.inject();
         Color {
             r: 0.5 * (u.x + 1.),
@@ -85,6 +66,27 @@ fn main() {
     // Constants for antialiasing:
     let num_samples_per_pixel = 10;
 
+    // Hittable objects:
+    let sphere1 = Sphere {
+        center: Point3 {
+            x: 0.,
+            y: 0.,
+            z: -1.,
+        },
+        radius: 0.5,
+    };
+    let sphere2 = Sphere {
+        center: Point3 {
+            x: 0.,
+            y: -100.5,
+            z: -1.,
+        },
+        radius: 100.,
+    };
+    let hittable_list = HittableList {
+        members: vec![Box::new(sphere1), Box::new(sphere2)],
+    };
+
     // Rendering operations:
     println!("P3");
     println!("{} {}", image_width, image_height);
@@ -97,7 +99,7 @@ fn main() {
                 let u: f64 = (i as f64 + random_double()) / ((image_width - 1) as f64);
                 let v: f64 = (j as f64 + random_double()) / ((image_height - 1) as f64);
                 let ray = camera.get_ray(u, v);
-                let color = ray_color(&ray);
+                let color = ray_color(&ray, &hittable_list);
                 colors.push(color);
             }
             let color = Color::average(&colors);
