@@ -1,11 +1,11 @@
 mod color;
-mod vector;
+mod geometry;
 
 fn main() {
     let image_width: i32 = 256;
     let image_height: i32 = 256;
 
-    let _v = vector::Vec3 {
+    let _v = geometry::Vec3 {
         x: 0.,
         y: 0.,
         z: 0.,
