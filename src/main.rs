@@ -1,31 +1,10 @@
 mod color;
 mod geometry;
+mod hittable_object;
 
 use color::Color;
 use geometry::{Point3, Ray, Vec3};
-
-fn get_point_hitting_sphere(center: &Point3, radius: f64, ray: &Ray) -> Option<Point3> {
-    // (O, d) := ray
-    // C := center
-    // r := radius
-    //
-    // v := O - C
-    // (v^T d)^2 - |v|^2 + r^2 >= 0
-
-    let origin = &ray.origin;
-    let dir = &ray.direction.inject();
-    let v = origin.subtract(center);
-
-    let b_half = v.inner_product(dir);
-    let c = v.inner_product(&v) - radius * radius;
-    let discriminant_quarter = b_half * b_half - c;
-    if discriminant_quarter <= 0. {
-        None
-    } else {
-        let t = -b_half + discriminant_quarter.sqrt();
-        Some(ray.at(t))
-    }
-}
+use hittable_object::{Hittable, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -44,14 +23,16 @@ fn ray_background_color(ray: &Ray) -> Color {
 }
 
 fn ray_color(ray: &Ray) -> Color {
-    let center = Point3 {
-        x: 0.,
-        y: 0.,
-        z: -1.,
+    let sphere = Sphere {
+        center: Point3 {
+            x: 0.,
+            y: 0.,
+            z: -1.,
+        },
+        radius: 0.5,
     };
-    let radius: f64 = 0.5;
-    if let Some(pt) = get_point_hitting_sphere(&center, radius, ray) {
-        let u = pt.subtract(&center).unit_vector().inject();
+    if let Some(hit) = sphere.hit(ray) {
+        let u = hit.surface_normal.inject();
         Color {
             r: 0.5 * (u.x + 1.),
             g: 0.5 * (u.y + 1.),
