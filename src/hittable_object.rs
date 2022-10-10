@@ -75,7 +75,7 @@ mod tests {
     use crate::geometry::Vec3;
 
     #[test]
-    fn sphere_tests() {
+    fn sphere_test1() {
         let sphere = Sphere {
             center: Point3 {
                 x: 0.,
@@ -106,6 +106,41 @@ mod tests {
             }
             .unit_vector(),
         };
-        assert_eq!(Some(expected_hit), sphere.hit(&ray))
+        assert_eq!(Some(expected_hit), sphere.hit(&ray));
+    }
+
+    #[test]
+    fn sphere_test2() {
+        let sphere = Sphere {
+            center: Point3 {
+                x: 0.,
+                y: 0.,
+                z: -8.,
+            },
+            radius: 5.,
+        };
+        let ray = Ray {
+            origin: Point3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: -0.6,
+                y: 0.,
+                z: -0.8,
+            }
+            .unit_vector(),
+        };
+        let expected_hit = HitRecord {
+            t: 4.999999999999997, // Ideally `5.`
+            surface_normal: Vec3 {
+                x: -0.5999999999999996, // Ideally `-0.6`
+                y: 0.,
+                z: 0.8000000000000004, // Ideally `0.8`
+            }
+            .unit_vector(),
+        };
+        assert_eq!(Some(expected_hit), sphere.hit(&ray));
     }
 }
