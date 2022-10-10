@@ -12,12 +12,19 @@ impl Color {
         println!("{} {} {}", ir, ig, ib);
     }
 
-    #[allow(dead_code)]
     pub fn blend(&self, t: f64, other: &Self) -> Self {
         Self {
             r: (1. - t) * self.r + t * other.r,
             g: (1. - t) * self.g + t * other.g,
             b: (1. - t) * self.b + t * other.b,
+        }
+    }
+
+    pub fn scale(&self, t: f64) -> Self {
+        Self {
+            r: self.r * t,
+            g: self.g * t,
+            b: self.b * t,
         }
     }
 

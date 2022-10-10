@@ -48,7 +48,7 @@ impl Vec3 {
 }
 
 /// The type for representing 3D unit vectors (i.e. 3D vectors with their length 1)
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UnitVec3 {
     x: f64,
     y: f64,

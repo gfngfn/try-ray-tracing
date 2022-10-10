@@ -1,5 +1,6 @@
 use crate::geometry::{Point3, Ray, UnitVec3};
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct HitRecord {
     pub t: f64,
     pub surface_normal: UnitVec3,
@@ -35,7 +36,7 @@ impl Hittable for Sphere {
         if discriminant_quarter <= 0. {
             None
         } else {
-            let t = -b_half + discriminant_quarter.sqrt();
+            let t = -b_half - discriminant_quarter.sqrt();
             if t < 0. {
                 None
             } else {
@@ -65,5 +66,46 @@ impl Hittable for HittableList {
             }
         }
         maybe_nearest
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::geometry::Vec3;
+
+    #[test]
+    fn sphere_tests() {
+        let sphere = Sphere {
+            center: Point3 {
+                x: 0.,
+                y: 0.,
+                z: -3.,
+            },
+            radius: 1.,
+        };
+        let ray = Ray {
+            origin: Point3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.,
+                y: 0.,
+                z: -1.,
+            }
+            .unit_vector(),
+        };
+        let expected_hit = HitRecord {
+            t: 2.,
+            surface_normal: Vec3 {
+                x: 0.,
+                y: 0.,
+                z: 1.,
+            }
+            .unit_vector(),
+        };
+        assert_eq!(Some(expected_hit), sphere.hit(&ray))
     }
 }

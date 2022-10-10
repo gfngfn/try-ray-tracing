@@ -9,12 +9,22 @@ mod hittable_object;
 
 use camera::Camera;
 use color::Color;
-use geometry::{Point3, Ray};
+use geometry::{Point3, Ray, UnitVec3, Vec3};
 use hittable_object::{Hittable, HittableList, Sphere};
 
+/// Returns a random double in [-0.5, 0.5).
 fn random_double() -> f64 {
     let mut rng = rand::thread_rng();
     rng.gen_range(-0.5..0.5)
+}
+
+fn random_unit_vector() -> UnitVec3 {
+    let v = Vec3 {
+        x: random_double(),
+        y: random_double(),
+        z: random_double(),
+    };
+    v.unit_vector()
 }
 
 fn ray_background_color(ray: &Ray) -> Color {
@@ -33,16 +43,27 @@ fn ray_background_color(ray: &Ray) -> Color {
     white.blend(t, &sky)
 }
 
-fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
-    if let Some(hit) = world.hit(ray) {
-        let u = hit.surface_normal.inject();
+fn ray_color(ray: &Ray, world: &dyn Hittable, diffusion_depth: i32) -> Color {
+    if diffusion_depth <= 0 {
         Color {
-            r: 0.5 * (u.x + 1.),
-            g: 0.5 * (u.y + 1.),
-            b: 0.5 * (u.z + 1.),
+            r: 0.,
+            g: 0.,
+            b: 0.,
         }
     } else {
-        ray_background_color(ray)
+        if let Some(hit) = world.hit(ray) {
+            let surface_normal = hit.surface_normal.inject();
+            let child_ray = Ray {
+                origin: ray.at(hit.t),
+                direction: surface_normal
+                    .add(&random_unit_vector().inject())
+                    .unit_vector(),
+            };
+            let color = ray_color(&child_ray, world, diffusion_depth - 1);
+            color.scale(0.5)
+        } else {
+            ray_background_color(ray)
+        }
     }
 }
 
@@ -65,6 +86,9 @@ fn main() {
 
     // Constants for antialiasing:
     let num_samples_per_pixel = 10;
+
+    // Constants for diffusion:
+    let max_diffusion_depth = 3;
 
     // Hittable objects:
     let sphere1 = Sphere {
@@ -99,7 +123,7 @@ fn main() {
                 let u: f64 = (i as f64 + random_double()) / ((image_width - 1) as f64);
                 let v: f64 = (j as f64 + random_double()) / ((image_height - 1) as f64);
                 let ray = camera.get_ray(u, v);
-                let color = ray_color(&ray, &hittable_list);
+                let color = ray_color(&ray, &hittable_list, max_diffusion_depth);
                 colors.push(color);
             }
             let color = Color::average(&colors);
