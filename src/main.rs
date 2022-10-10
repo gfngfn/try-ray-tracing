@@ -1,9 +1,11 @@
+mod camera;
 mod color;
 mod geometry;
 mod hittable_object;
 
+use camera::Camera;
 use color::Color;
-use geometry::{Point3, Ray, Vec3};
+use geometry::{Point3, Ray};
 use hittable_object::{Hittable, HittableList, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
@@ -61,34 +63,15 @@ fn main() {
     let image_height: i32 = ((image_width as f64) / aspect_ratio) as i32;
 
     // Constants for the camera:
-    let viewport_height: f64 = 2.0;
-    let viewport_width: f64 = viewport_height * aspect_ratio;
-    let focal_length: f64 = 1.0;
-
     let origin = Point3 {
         x: 0.,
         y: 0.,
         z: 0.,
     };
-    let horizontal = Vec3 {
-        x: viewport_width,
-        y: 0.,
-        z: 0.,
-    };
-    let vertical = Vec3 {
-        x: 0.,
-        y: viewport_height,
-        z: 0.,
-    };
-    let forward = Vec3 {
-        x: 0.,
-        y: 0.,
-        z: -focal_length,
-    };
-    let lower_left_corner = origin
-        .add(&horizontal.scale(-0.5))
-        .add(&vertical.scale(-0.5))
-        .add(&forward);
+    let viewport_height: f64 = 2.0;
+    let focal_length: f64 = 1.0;
+
+    let camera = Camera::new(aspect_ratio, origin, viewport_height, focal_length);
 
     // Rendering operations:
     println!("P3");
@@ -99,15 +82,7 @@ fn main() {
         for i in 0..image_width {
             let u: f64 = (i as f64) / ((image_width - 1) as f64);
             let v: f64 = (j as f64) / ((image_height - 1) as f64);
-            let direction = lower_left_corner
-                .add(&horizontal.scale(u))
-                .add(&vertical.scale(v))
-                .subtract(&origin)
-                .unit_vector();
-            let ray = Ray {
-                origin: origin.clone(),
-                direction,
-            };
+            let ray = camera.get_ray(u, v);
             let color = ray_color(&ray);
             color.write();
         }
