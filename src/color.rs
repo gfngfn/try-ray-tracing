@@ -20,4 +20,21 @@ impl Color {
             b: (1. - t) * self.b + t * other.b,
         }
     }
+
+    pub fn average(colors: &Vec<Self>) -> Self {
+        let mut r: f64 = 0.;
+        let mut g: f64 = 0.;
+        let mut b: f64 = 0.;
+        for color in colors.iter() {
+            r += color.r;
+            g += color.g;
+            b += color.b;
+        }
+        let num = colors.len() as f64;
+        Self {
+            r: r / num,
+            g: g / num,
+            b: b / num,
+        }
+    }
 }

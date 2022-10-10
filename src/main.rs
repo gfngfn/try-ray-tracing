@@ -1,3 +1,7 @@
+extern crate rand;
+
+use rand::Rng;
+
 mod camera;
 mod color;
 mod geometry;
@@ -7,6 +11,11 @@ use camera::Camera;
 use color::Color;
 use geometry::{Point3, Ray};
 use hittable_object::{Hittable, HittableList, Sphere};
+
+fn random_double() -> f64 {
+    let mut rng = rand::thread_rng();
+    rng.gen_range(-0.5..0.5)
+}
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -73,6 +82,9 @@ fn main() {
 
     let camera = Camera::new(aspect_ratio, origin, viewport_height, focal_length);
 
+    // Constants for antialiasing:
+    let num_samples_per_pixel = 10;
+
     // Rendering operations:
     println!("P3");
     println!("{} {}", image_width, image_height);
@@ -80,10 +92,15 @@ fn main() {
     for j in (0..image_height).rev() {
         eprintln!("Scan lines remaining: {}", j + 1);
         for i in 0..image_width {
-            let u: f64 = (i as f64) / ((image_width - 1) as f64);
-            let v: f64 = (j as f64) / ((image_height - 1) as f64);
-            let ray = camera.get_ray(u, v);
-            let color = ray_color(&ray);
+            let mut colors: Vec<Color> = vec![];
+            for _ in 0..num_samples_per_pixel {
+                let u: f64 = (i as f64 + random_double()) / ((image_width - 1) as f64);
+                let v: f64 = (j as f64 + random_double()) / ((image_height - 1) as f64);
+                let ray = camera.get_ray(u, v);
+                let color = ray_color(&ray);
+                colors.push(color);
+            }
+            let color = Color::average(&colors);
             color.write();
         }
     }
