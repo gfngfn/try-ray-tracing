@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -23,6 +24,15 @@ impl Vec3 {
     }
 
     #[allow(dead_code)]
+    pub fn divide(&self, d: f64) -> Self {
+        Vec3 {
+            x: self.x / d,
+            y: self.y / d,
+            z: self.z / d,
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -31,8 +41,41 @@ impl Vec3 {
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
+
+    #[allow(dead_code)]
+    pub fn unit_vector(&self) -> UnitVec3 {
+        UnitVec3::new(self)
+    }
 }
 
+/// The type for representing 3D unit vectors (i.e. 3D vectors with their length 1)
+#[derive(Clone)]
+pub struct UnitVec3 {
+    x: f64,
+    y: f64,
+    z: f64,
+}
+impl UnitVec3 {
+    #[allow(dead_code)]
+    pub fn new(v: &Vec3) -> Self {
+        let w = v.divide(v.length());
+        Self {
+            x: w.x,
+            y: w.y,
+            z: w.z,
+        }
+    }
+
+    pub fn inject(&self) -> Vec3 {
+        Vec3 {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Point3 {
     pub x: f64,
     pub y: f64,
@@ -46,5 +89,25 @@ impl Point3 {
             y: self.y + v.y,
             z: self.z + v.z,
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct Ray {
+    origin: Point3,
+    direction: UnitVec3,
+}
+impl Ray {
+    #[allow(dead_code)]
+    pub fn new(origin: &Point3, direction: &UnitVec3) -> Self {
+        Ray {
+            origin: origin.clone(),
+            direction: direction.clone(),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn at(&self, t: f64) -> Point3 {
+        self.origin.add(&self.direction.inject().scale(t))
     }
 }
