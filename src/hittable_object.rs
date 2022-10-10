@@ -30,15 +30,40 @@ impl Hittable for Sphere {
         let v = origin.subtract(center);
 
         let b_half = v.inner_product(dir);
-        let c = v.inner_product(&v) - radius * radius;
+        let c = v.length_squared() - radius * radius;
         let discriminant_quarter = b_half * b_half - c;
         if discriminant_quarter <= 0. {
             None
         } else {
             let t = -b_half + discriminant_quarter.sqrt();
-            let intersection_point = ray.at(t);
-            let surface_normal = intersection_point.subtract(&center).unit_vector();
-            Some(HitRecord { t, surface_normal })
+            if t < 0. {
+                None
+            } else {
+                let intersection_point = ray.at(t);
+                let surface_normal = intersection_point.subtract(&center).unit_vector();
+                Some(HitRecord { t, surface_normal })
+            }
         }
+    }
+}
+
+pub struct HittableList {
+    pub members: Vec<Box<dyn Hittable>>,
+}
+impl Hittable for HittableList {
+    fn hit(&self, ray: &Ray) -> Option<HitRecord> {
+        let mut maybe_nearest: Option<HitRecord> = None;
+        for hittable in self.members.iter() {
+            if let Some(hit) = hittable.hit(ray) {
+                if let Some(nearest) = &maybe_nearest {
+                    if hit.t < nearest.t {
+                        maybe_nearest = Some(hit);
+                    }
+                } else {
+                    maybe_nearest = Some(hit);
+                }
+            }
+        }
+        maybe_nearest
     }
 }

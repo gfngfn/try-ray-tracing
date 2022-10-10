@@ -4,7 +4,7 @@ mod hittable_object;
 
 use color::Color;
 use geometry::{Point3, Ray, Vec3};
-use hittable_object::{Hittable, Sphere};
+use hittable_object::{Hittable, HittableList, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -23,7 +23,7 @@ fn ray_background_color(ray: &Ray) -> Color {
 }
 
 fn ray_color(ray: &Ray) -> Color {
-    let sphere = Sphere {
+    let sphere1 = Sphere {
         center: Point3 {
             x: 0.,
             y: 0.,
@@ -31,7 +31,18 @@ fn ray_color(ray: &Ray) -> Color {
         },
         radius: 0.5,
     };
-    if let Some(hit) = sphere.hit(ray) {
+    let sphere2 = Sphere {
+        center: Point3 {
+            x: 0.,
+            y: -100.5,
+            z: -1.,
+        },
+        radius: 100.,
+    };
+    let hittable_list = HittableList {
+        members: vec![Box::new(sphere1), Box::new(sphere2)],
+    };
+    if let Some(hit) = hittable_list.hit(ray) {
         let u = hit.surface_normal.inject();
         Color {
             r: 0.5 * (u.x + 1.),
