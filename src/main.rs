@@ -4,7 +4,7 @@ mod geometry;
 use color::Color;
 use geometry::{Point3, Ray, Vec3};
 
-fn do_hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> bool {
+fn get_point_hitting_sphere(center: &Point3, radius: f64, ray: &Ray) -> Option<Point3> {
     // (O, d) := ray
     // C := center
     // r := radius
@@ -18,7 +18,13 @@ fn do_hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> bool {
 
     let b_half = v.inner_product(dir);
     let c = v.inner_product(&v) - radius * radius;
-    b_half * b_half - c >= 0.
+    let discriminant_quarter = b_half * b_half - c;
+    if discriminant_quarter <= 0. {
+        None
+    } else {
+        let t = -b_half + discriminant_quarter.sqrt();
+        Some(ray.at(t))
+    }
 }
 
 fn ray_background_color(ray: &Ray) -> Color {
@@ -44,11 +50,12 @@ fn ray_color(ray: &Ray) -> Color {
         z: -1.,
     };
     let radius: f64 = 0.5;
-    if do_hit_sphere(&center, radius, ray) {
+    if let Some(pt) = get_point_hitting_sphere(&center, radius, ray) {
+        let u = pt.subtract(&center).unit_vector().inject();
         Color {
-            r: 1.,
-            g: 0.,
-            b: 0.,
+            r: 0.5 * (u.x + 1.),
+            g: 0.5 * (u.y + 1.),
+            b: 0.5 * (u.z + 1.),
         }
     } else {
         ray_background_color(ray)
