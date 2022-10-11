@@ -42,6 +42,15 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, diffusion_depth: i32) -> Color {
     }
 }
 
+/// Performs Gamma Correction.
+fn filter_color(color: &Color, num_samples_per_pixel: i32) -> Color {
+    Color {
+        r: color.r.sqrt(),
+        g: color.g.sqrt(),
+        b: color.b.sqrt(),
+    }
+}
+
 fn main() {
     // Constants for the image:
     let aspect_ratio: f64 = 16.0 / 9.0;
@@ -75,7 +84,7 @@ fn main() {
         radius: 0.5,
         material: Box::new(Lambertian {
             albedo: Attenuation {
-                r: 0.5,
+                r: 0.8,
                 g: 0.5,
                 b: 0.5,
             },
@@ -116,7 +125,7 @@ fn main() {
                 colors.push(color);
             }
             let color = Color::average(&colors);
-            color.write();
+            filter_color(&color, num_samples_per_pixel).write();
         }
     }
     eprintln!("Done.");
