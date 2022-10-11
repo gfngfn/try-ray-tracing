@@ -5,16 +5,19 @@ use dyn_clone::DynClone;
 use crate::color::Attenuation;
 use crate::geometry::{random_unit_vector, reflect_vector, Point3, Ray, UnitVec3};
 
+/// The type for intersection points; see `Hittable` for the usage of this type.
 #[derive(Clone, Debug, PartialEq)]
 pub struct HitRecord {
     pub t: f64,
     pub surface_normal: UnitVec3,
 }
 
+/// The trait for surface materials.
 pub trait Material: DynClone {
     fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray);
 }
 
+/// The type for materials that perform Lambertian reflectance.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Lambertian {
     pub albedo: Attenuation,
@@ -32,6 +35,7 @@ impl Material for Lambertian {
     }
 }
 
+/// The type for metals, i.e., materials that perform the regular reflection.
 #[derive(Clone)]
 pub struct Metal {
     pub albedo: Attenuation,
@@ -47,14 +51,27 @@ impl Material for Metal {
     }
 }
 
+pub type BoxedMaterial = Box<dyn Material>;
+impl Clone for BoxedMaterial {
+    fn clone(&self) -> Self {
+        dyn_clone::clone_box(&**self)
+    }
+}
+
+/// The trait for objects hittable by rays.
 pub trait Hittable {
+    /// Checks that `ray` intersects with the object.
+    /// Returns `Some((hit, material))` if it does
+    /// where `hit` is the information about the intersection point
+    /// and `material` is the surface material of that point,
+    /// or returns `None` otherwise.
     fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)>;
 }
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Box<dyn Material>,
+    pub material: BoxedMaterial,
 }
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)> {
@@ -84,8 +101,7 @@ impl Hittable for Sphere {
             } else {
                 let intersection_point = ray.at(t);
                 let surface_normal = intersection_point.subtract(&center).unit_vector();
-                let material = dyn_clone::clone_box(&*self.material);
-                Some((HitRecord { t, surface_normal }, material))
+                Some((HitRecord { t, surface_normal }, self.material.clone()))
             }
         }
     }
@@ -95,8 +111,8 @@ pub struct HittableList {
     pub members: Vec<Box<dyn Hittable>>,
 }
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)> {
-        let mut maybe_nearest: Option<(HitRecord, Box<dyn Material>)> = None;
+    fn hit(&self, ray: &Ray) -> Option<(HitRecord, BoxedMaterial)> {
+        let mut maybe_nearest: Option<(HitRecord, BoxedMaterial)> = None;
         for hittable in self.members.iter() {
             if let Some(pair) = hittable.hit(ray) {
                 let (hit, _material) = &pair;
@@ -119,7 +135,7 @@ mod tests {
     use super::*;
     use crate::geometry::Vec3;
 
-    fn create_dummy_material() -> Box<dyn Material> {
+    fn create_dummy_material() -> BoxedMaterial {
         let albedo = Attenuation {
             r: 0.5,
             g: 0.5,
