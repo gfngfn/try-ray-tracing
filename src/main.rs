@@ -1,31 +1,12 @@
-extern crate rand;
-
-use rand::Rng;
-
 mod camera;
 mod color;
 mod geometry;
 mod hittable_object;
 
 use camera::Camera;
-use color::Color;
-use geometry::{Point3, Ray, UnitVec3, Vec3};
-use hittable_object::{Hittable, HittableList, Sphere};
-
-/// Returns a random double in [-0.5, 0.5).
-fn random_double() -> f64 {
-    let mut rng = rand::thread_rng();
-    rng.gen_range(-0.5..0.5)
-}
-
-fn random_unit_vector() -> UnitVec3 {
-    let v = Vec3 {
-        x: random_double(),
-        y: random_double(),
-        z: random_double(),
-    };
-    v.unit_vector()
-}
+use color::{Attenuation, Color};
+use geometry::{random_double, Point3, Ray};
+use hittable_object::{Hittable, HittableList, Lambertian, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -51,16 +32,10 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, diffusion_depth: i32) -> Color {
             b: 0.,
         }
     } else {
-        if let Some(hit) = world.hit(ray) {
-            let surface_normal = hit.surface_normal.inject();
-            let child_ray = Ray {
-                origin: ray.at(hit.t),
-                direction: surface_normal
-                    .add(&random_unit_vector().inject())
-                    .unit_vector(),
-            };
+        if let Some((hit, material)) = world.hit(ray) {
+            let (attenuation, child_ray) = material.scatter(ray, &hit);
             let color = ray_color(&child_ray, world, diffusion_depth - 1);
-            color.scale(0.5)
+            color.attenuate(&attenuation)
         } else {
             ray_background_color(ray)
         }
@@ -98,6 +73,13 @@ fn main() {
             z: -1.,
         },
         radius: 0.5,
+        material: Box::new(Lambertian {
+            albedo: Attenuation {
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+            },
+        }),
     };
     let sphere2 = Sphere {
         center: Point3 {
@@ -106,6 +88,13 @@ fn main() {
             z: -1.,
         },
         radius: 100.,
+        material: Box::new(Lambertian {
+            albedo: Attenuation {
+                r: 0.2,
+                g: 0.6,
+                b: 0.4,
+            },
+        }),
     };
     let hittable_list = HittableList {
         members: vec![Box::new(sphere1), Box::new(sphere2)],

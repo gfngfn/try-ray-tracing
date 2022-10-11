@@ -1,4 +1,9 @@
-use crate::geometry::{Point3, Ray, UnitVec3};
+extern crate dyn_clone;
+
+use dyn_clone::DynClone;
+
+use crate::color::Attenuation;
+use crate::geometry::{random_unit_vector, Point3, Ray, UnitVec3};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct HitRecord {
@@ -6,16 +11,38 @@ pub struct HitRecord {
     pub surface_normal: UnitVec3,
 }
 
+pub trait Material: DynClone {
+    fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray);
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Lambertian {
+    pub albedo: Attenuation,
+}
+impl Material for Lambertian {
+    fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
+        let surface_normal = hit.surface_normal.inject();
+        let scattered_direction = surface_normal.add(&random_unit_vector().inject());
+        let child_ray = Ray {
+            origin: ray_in.at(hit.t),
+            direction: scattered_direction.unit_vector(),
+            // TODO: make this work even when `scattered_direction` is close to the zero vector
+        };
+        (self.albedo.clone(), child_ray)
+    }
+}
+
 pub trait Hittable {
-    fn hit(&self, ray: &Ray) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)>;
 }
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
+    pub material: Box<dyn Material>,
 }
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)> {
         let center = &self.center;
         let radius = &self.radius;
 
@@ -42,7 +69,8 @@ impl Hittable for Sphere {
             } else {
                 let intersection_point = ray.at(t);
                 let surface_normal = intersection_point.subtract(&center).unit_vector();
-                Some(HitRecord { t, surface_normal })
+                let material = dyn_clone::clone_box(&*self.material);
+                Some((HitRecord { t, surface_normal }, material))
             }
         }
     }
@@ -52,16 +80,18 @@ pub struct HittableList {
     pub members: Vec<Box<dyn Hittable>>,
 }
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray) -> Option<HitRecord> {
-        let mut maybe_nearest: Option<HitRecord> = None;
+    fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)> {
+        let mut maybe_nearest: Option<(HitRecord, Box<dyn Material>)> = None;
         for hittable in self.members.iter() {
-            if let Some(hit) = hittable.hit(ray) {
+            if let Some(pair) = hittable.hit(ray) {
+                let (hit, _material) = &pair;
                 if let Some(nearest) = &maybe_nearest {
-                    if hit.t < nearest.t {
-                        maybe_nearest = Some(hit);
+                    let (nearest_hit, _) = &nearest;
+                    if hit.t < nearest_hit.t {
+                        maybe_nearest = Some(pair);
                     }
                 } else {
-                    maybe_nearest = Some(hit);
+                    maybe_nearest = Some(pair);
                 }
             }
         }

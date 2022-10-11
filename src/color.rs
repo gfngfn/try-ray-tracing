@@ -1,4 +1,5 @@
-// All fields are in [0, 1).
+// All fields are in [0, 1].
+#[derive(Clone, Debug, PartialEq)]
 pub struct Color {
     pub r: f64,
     pub g: f64,
@@ -20,11 +21,20 @@ impl Color {
         }
     }
 
+    #[allow(dead_code)]
     pub fn scale(&self, t: f64) -> Self {
         Self {
             r: self.r * t,
             g: self.g * t,
             b: self.b * t,
+        }
+    }
+
+    pub fn attenuate(&self, attenuation: &Attenuation) -> Self {
+        Self {
+            r: self.r * attenuation.r,
+            g: self.g * attenuation.g,
+            b: self.b * attenuation.b,
         }
     }
 
@@ -44,4 +54,12 @@ impl Color {
             b: b / num,
         }
     }
+}
+
+// All fields are in [0, 1].
+#[derive(Clone, Debug, PartialEq)]
+pub struct Attenuation {
+    pub r: f64,
+    pub g: f64,
+    pub b: f64,
 }

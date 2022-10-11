@@ -1,3 +1,7 @@
+extern crate rand;
+
+use rand::Rng;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
@@ -107,6 +111,21 @@ impl Ray {
     pub fn at(&self, t: f64) -> Point3 {
         self.origin.add(&self.direction.inject().scale(t))
     }
+}
+
+/// Returns a random double in [-0.5, 0.5).
+pub fn random_double() -> f64 {
+    let mut rng = rand::thread_rng();
+    rng.gen_range(-0.5..0.5)
+}
+
+pub fn random_unit_vector() -> UnitVec3 {
+    let v = Vec3 {
+        x: random_double(),
+        y: random_double(),
+        z: random_double(),
+    };
+    v.unit_vector()
 }
 
 #[cfg(test)]
