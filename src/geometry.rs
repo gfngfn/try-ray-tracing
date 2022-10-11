@@ -128,6 +128,13 @@ pub fn random_unit_vector() -> UnitVec3 {
     v.unit_vector()
 }
 
+pub fn reflect_vector(u_in: &UnitVec3, u_normal: &UnitVec3) -> UnitVec3 {
+    let v_in = u_in.inject();
+    let v_normal = u_normal.inject();
+    v_in.add(&v_normal.scale(-2. * v_in.inner_product(&v_normal)))
+        .unit_vector()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -220,6 +227,31 @@ mod tests {
                 z: 33.,
             },
             p1.add(&v)
+        );
+    }
+
+    #[test]
+    fn reflect_vector_tests() {
+        let u_in = Vec3 {
+            x: 2.,
+            y: 1.,
+            z: 0.5,
+        }
+        .unit_vector();
+        let u_normal = Vec3 {
+            x: 0.,
+            y: -1.,
+            z: 0.,
+        }
+        .unit_vector();
+        assert_eq!(
+            Vec3 {
+                x: 2.,
+                y: -1.,
+                z: 0.5,
+            }
+            .unit_vector(),
+            reflect_vector(&u_in, &u_normal)
         );
     }
 }

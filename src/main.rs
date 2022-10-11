@@ -6,7 +6,7 @@ mod hittable_object;
 use camera::Camera;
 use color::{Attenuation, Color};
 use geometry::{random_double, Point3, Ray};
-use hittable_object::{Hittable, HittableList, Lambertian, Sphere};
+use hittable_object::{Hittable, HittableList, Lambertian, Metal, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -43,7 +43,7 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, diffusion_depth: i32) -> Color {
 }
 
 /// Performs Gamma Correction.
-fn filter_color(color: &Color, num_samples_per_pixel: i32) -> Color {
+fn filter_color(color: &Color) -> Color {
     Color {
         r: color.r.sqrt(),
         g: color.g.sqrt(),
@@ -92,6 +92,21 @@ fn main() {
     };
     let sphere2 = Sphere {
         center: Point3 {
+            x: 1.,
+            y: 0.,
+            z: -1.,
+        },
+        radius: 0.5,
+        material: Box::new(Metal {
+            albedo: Attenuation {
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+            },
+        }),
+    };
+    let ground = Sphere {
+        center: Point3 {
             x: 0.,
             y: -100.5,
             z: -1.,
@@ -106,7 +121,7 @@ fn main() {
         }),
     };
     let hittable_list = HittableList {
-        members: vec![Box::new(sphere1), Box::new(sphere2)],
+        members: vec![Box::new(sphere1), Box::new(sphere2), Box::new(ground)],
     };
 
     // Rendering operations:
@@ -125,7 +140,7 @@ fn main() {
                 colors.push(color);
             }
             let color = Color::average(&colors);
-            filter_color(&color, num_samples_per_pixel).write();
+            filter_color(&color).write();
         }
     }
     eprintln!("Done.");

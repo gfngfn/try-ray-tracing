@@ -3,7 +3,7 @@ extern crate dyn_clone;
 use dyn_clone::DynClone;
 
 use crate::color::Attenuation;
-use crate::geometry::{random_unit_vector, Point3, Ray, UnitVec3};
+use crate::geometry::{random_unit_vector, reflect_vector, Point3, Ray, UnitVec3};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct HitRecord {
@@ -27,6 +27,21 @@ impl Material for Lambertian {
             origin: ray_in.at(hit.t),
             direction: scattered_direction.unit_vector(),
             // TODO: make this work even when `scattered_direction` is close to the zero vector
+        };
+        (self.albedo.clone(), child_ray)
+    }
+}
+
+#[derive(Clone)]
+pub struct Metal {
+    pub albedo: Attenuation,
+}
+impl Material for Metal {
+    fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
+        let direction = reflect_vector(&ray_in.direction, &hit.surface_normal);
+        let child_ray = Ray {
+            origin: ray_in.at(hit.t),
+            direction,
         };
         (self.albedo.clone(), child_ray)
     }
@@ -104,6 +119,16 @@ mod tests {
     use super::*;
     use crate::geometry::Vec3;
 
+    fn create_dummy_material() -> Box<dyn Material> {
+        let albedo = Attenuation {
+            r: 0.5,
+            g: 0.5,
+            b: 0.5,
+        };
+        let material = Lambertian { albedo };
+        Box::new(material)
+    }
+
     #[test]
     fn sphere_test1() {
         let sphere = Sphere {
@@ -113,6 +138,7 @@ mod tests {
                 z: -3.,
             },
             radius: 1.,
+            material: create_dummy_material(),
         };
         let ray = Ray {
             origin: Point3 {
@@ -136,7 +162,14 @@ mod tests {
             }
             .unit_vector(),
         };
-        assert_eq!(Some(expected_hit), sphere.hit(&ray));
+        match sphere.hit(&ray) {
+            Some((got_hit, _)) => {
+                assert_eq!(expected_hit, got_hit);
+            }
+            None => {
+                assert!(false);
+            }
+        }
     }
 
     #[test]
@@ -148,6 +181,7 @@ mod tests {
                 z: -8.,
             },
             radius: 5.,
+            material: create_dummy_material(),
         };
         let ray = Ray {
             origin: Point3 {
@@ -171,6 +205,13 @@ mod tests {
             }
             .unit_vector(),
         };
-        assert_eq!(Some(expected_hit), sphere.hit(&ray));
+        match sphere.hit(&ray) {
+            Some((got_hit, _)) => {
+                assert_eq!(expected_hit, got_hit);
+            }
+            None => {
+                assert!(false);
+            }
+        }
     }
 }
