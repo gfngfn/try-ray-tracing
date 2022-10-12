@@ -72,7 +72,7 @@ fn main() {
     let num_samples_per_pixel = 10;
 
     // Constants for diffusion:
-    let max_diffusion_depth = 3;
+    let max_diffusion_depth = 7;
 
     // Hittable objects:
     let sphere1 = Sphere {

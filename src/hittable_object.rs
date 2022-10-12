@@ -68,16 +68,16 @@ impl Material for Glass {
     fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
         let normal_raw = hit.surface_normal.inject();
         let direction_in = ray_in.direction.inject();
-        let inprod = normal_raw.inner_product(&direction_in);
+        let inprod_raw = normal_raw.inner_product(&direction_in);
 
         // TODO: generalize the refractive index of external spaces.
-        let (normal, eta_in, eta_out) = {
-            if inprod < 0. {
+        let (normal, inprod, eta_in, eta_out) = {
+            if inprod_raw < 0. {
                 // If `ray_in` is coming into the object from the outside:
-                (normal_raw, 1., self.eta)
+                (normal_raw, inprod_raw, 1., self.eta)
             } else {
                 // If `ray_in` is going out of the object from the inside:
-                (normal_raw.scale(-1.), self.eta, 1.)
+                (normal_raw.scale(-1.), -inprod_raw, self.eta, 1.)
             }
         };
 
@@ -139,13 +139,27 @@ impl Hittable for Sphere {
         let b_half = v.inner_product(dir);
         let c = v.length_squared() - radius * radius;
         let discriminant_quarter = b_half * b_half - c;
-        if discriminant_quarter <= 0. {
-            None
-        } else {
-            let t = -b_half - discriminant_quarter.sqrt();
-            if t < 0. {
+        let t_opt = {
+            if discriminant_quarter <= 0. {
                 None
             } else {
+                let sqrt_of_discriminant_quarter = discriminant_quarter.sqrt();
+                let t_minus = -b_half - sqrt_of_discriminant_quarter;
+                if t_minus < 0. {
+                    let t_plus = -b_half + sqrt_of_discriminant_quarter;
+                    if t_plus < 0. {
+                        None
+                    } else {
+                        Some(t_plus)
+                    }
+                } else {
+                    Some(t_minus)
+                }
+            }
+        };
+        match t_opt {
+            None => None,
+            Some(t) => {
                 let intersection_point = ray.at(t);
                 let surface_normal = intersection_point.subtract(&center).unit_vector();
                 Some((HitRecord { t, surface_normal }, self.material.clone()))
@@ -279,6 +293,49 @@ mod tests {
     }
 
     #[test]
+    fn sphere_test3() {
+        let sphere = Sphere {
+            center: Point3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            radius: 5.,
+            material: create_dummy_material(),
+        };
+        let ray = Ray {
+            origin: Point3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.,
+                y: 0.,
+                z: -1.,
+            }
+            .unit_vector(),
+        };
+        let expected_hit = HitRecord {
+            t: 5.,
+            surface_normal: Vec3 {
+                x: 0.,
+                y: 0.,
+                z: -1.,
+            }
+            .unit_vector(),
+        };
+        match sphere.hit(&ray) {
+            Some((got_hit, _)) => {
+                assert_eq!(expected_hit, got_hit);
+            }
+            None => {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
     fn glass_scatter_test1() {
         let glass = Glass { eta: 1.0 };
         let ray_in = Ray {
@@ -354,6 +411,48 @@ mod tests {
             direction: Vec3 {
                 x: 0.5000000000000001,  // Ideally `0.5`
                 y: -0.8660254037844386, // Ideally `-3f64.sqrt() / 2.`
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let (_attenuation, ray_out) = glass.scatter(&ray_in, &hit);
+        assert_eq!(expected_ray_out, ray_out);
+    }
+
+    #[test]
+    fn glass_scatter_test3() {
+        let glass = Glass { eta: 3f64.sqrt() };
+        let ray_in = Ray {
+            origin: Point3 {
+                x: -1.,
+                y: -3f64.sqrt(),
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 1.,
+                y: 3f64.sqrt(),
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let hit = HitRecord {
+            t: 2.,
+            surface_normal: Vec3 {
+                x: 0.,
+                y: 1.,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let expected_ray_out = Ray {
+            origin: Point3 {
+                x: 2.220446049250313e-16, // Ideally `0.`
+                y: 2.220446049250313e-16, // Ideally `0.`
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.8660254037844388,  // Ideally `3f64.sqrt() / 2.`
+                y: 0.49999999999999967, // Ideally `0.5`
                 z: 0.,
             }
             .unit_vector(),
