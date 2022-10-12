@@ -9,12 +9,19 @@ pub struct Vec3 {
     pub z: f64,
 }
 impl Vec3 {
-    #[allow(dead_code)]
     pub fn add(&self, v: &Self) -> Self {
         Vec3 {
             x: self.x + v.x,
             y: self.y + v.y,
             z: self.z + v.z,
+        }
+    }
+
+    pub fn subtract(&self, v: &Self) -> Self {
+        Vec3 {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
         }
     }
 
@@ -101,7 +108,7 @@ impl Point3 {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: UnitVec3,

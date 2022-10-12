@@ -6,7 +6,7 @@ mod hittable_object;
 use camera::Camera;
 use color::{Attenuation, Color};
 use geometry::{random_double, Point3, Ray};
-use hittable_object::{Hittable, HittableList, Lambertian, Metal, Sphere};
+use hittable_object::{Glass, Hittable, HittableList, Lambertian, Metal, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
     let u = &ray.direction;
@@ -77,7 +77,7 @@ fn main() {
     // Hittable objects:
     let sphere1 = Sphere {
         center: Point3 {
-            x: 0.,
+            x: -1.,
             y: 0.,
             z: -1.,
         },
@@ -105,6 +105,15 @@ fn main() {
             },
         }),
     };
+    let sphere3 = Sphere {
+        center: Point3 {
+            x: 0.,
+            y: 0.,
+            z: -1.,
+        },
+        radius: 0.5,
+        material: Box::new(Glass { eta: 1.5 }),
+    };
     let ground = Sphere {
         center: Point3 {
             x: 0.,
@@ -121,7 +130,12 @@ fn main() {
         }),
     };
     let hittable_list = HittableList {
-        members: vec![Box::new(sphere1), Box::new(sphere2), Box::new(ground)],
+        members: vec![
+            Box::new(sphere1),
+            Box::new(sphere2),
+            Box::new(sphere3),
+            Box::new(ground),
+        ],
     };
 
     // Rendering operations:

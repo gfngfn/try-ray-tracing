@@ -58,6 +58,53 @@ impl Clone for BoxedMaterial {
     }
 }
 
+/// The type for glasses, i.e., materials that perform refraction.
+/// The parameter `eta` is the refractive index and should >= 1.
+#[derive(Clone)]
+pub struct Glass {
+    pub eta: f64,
+}
+impl Material for Glass {
+    fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
+        let normal_raw = hit.surface_normal.inject();
+        let direction_in = ray_in.direction.inject();
+        let inprod = normal_raw.inner_product(&direction_in);
+
+        // TODO: generalize the refractive index of external spaces.
+        let (normal, eta_in, eta_out) = {
+            if inprod < 0. {
+                // If `ray_in` is coming into the object from the outside:
+                (normal_raw, 1., self.eta)
+            } else {
+                // If `ray_in` is going out of the object from the inside:
+                (normal_raw.scale(-1.), self.eta, 1.)
+            }
+        };
+
+        // v := d - (n^T d) n
+        let vp_in = direction_in.subtract(&normal.scale(inprod));
+
+        // v' := (eta / eta') v
+        let vp_out = vp_in.scale(eta_in / eta_out);
+
+        // d' = v' - sqrt(1 - |v'|^2) n
+        let direction_out = vp_out
+            .subtract(&normal.scale((1. - vp_out.length_squared()).sqrt()))
+            .unit_vector();
+
+        let ray = Ray {
+            origin: ray_in.at(hit.t),
+            direction: direction_out,
+        };
+        let attenuation = Attenuation {
+            r: 1.,
+            g: 1.,
+            b: 1.,
+        }; // TODO: generalize this
+        (attenuation, ray)
+    }
+}
+
 /// The trait for objects hittable by rays.
 pub trait Hittable {
     /// Checks that `ray` intersects with the object.
@@ -229,5 +276,47 @@ mod tests {
                 assert!(false);
             }
         }
+    }
+
+    #[test]
+    fn glass_scatter_test1() {
+        let glass = Glass { eta: 1.0 };
+        let ray_in = Ray {
+            origin: Point3 {
+                x: -3.,
+                y: 4.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.6,
+                y: -0.8,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let hit = HitRecord {
+            t: 5.,
+            surface_normal: Vec3 {
+                x: 0.,
+                y: 1.,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let expected_ray_out = Ray {
+            origin: Point3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.6,
+                y: -0.8,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let (_attenuation, ray_out) = glass.scatter(&ray_in, &hit);
+        assert_eq!(expected_ray_out, ray_out);
     }
 }
