@@ -319,4 +319,46 @@ mod tests {
         let (_attenuation, ray_out) = glass.scatter(&ray_in, &hit);
         assert_eq!(expected_ray_out, ray_out);
     }
+
+    #[test]
+    fn glass_scatter_test2() {
+        let glass = Glass { eta: 3f64.sqrt() };
+        let ray_in = Ray {
+            origin: Point3 {
+                x: -3f64.sqrt(),
+                y: 1.,
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 3f64.sqrt(),
+                y: -1.,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let hit = HitRecord {
+            t: 2.,
+            surface_normal: Vec3 {
+                x: 0.,
+                y: 1.,
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let expected_ray_out = Ray {
+            origin: Point3 {
+                x: 2.220446049250313e-16,  // Ideally `0.`
+                y: -2.220446049250313e-16, // Ideally `0.`
+                z: 0.,
+            },
+            direction: Vec3 {
+                x: 0.5000000000000001,  // Ideally `0.5`
+                y: -0.8660254037844386, // Ideally `-3f64.sqrt() / 2.`
+                z: 0.,
+            }
+            .unit_vector(),
+        };
+        let (_attenuation, ray_out) = glass.scatter(&ray_in, &hit);
+        assert_eq!(expected_ray_out, ray_out);
+    }
 }
