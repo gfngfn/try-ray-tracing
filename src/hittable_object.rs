@@ -88,10 +88,22 @@ impl Material for Glass {
         // v' := (eta / eta') v
         let vp_out = vp_in.scale(eta_in / eta_out);
 
-        // d' = v' - sqrt(1 - |v'|^2) n
-        let direction_out = vp_out
-            .subtract(&normal.scale((1. - vp_out.length_squared()).sqrt()))
-            .unit_vector();
+        // c := 1 - |v'|^2
+        let coeff_normal = 1. - vp_out.length_squared();
+
+        let direction_out = {
+            if coeff_normal >= 0. {
+                // If the light can refract:
+
+                // d' = v' - sqrt(c) n
+                vp_out
+                    .subtract(&normal.scale(coeff_normal.sqrt()))
+                    .unit_vector()
+            } else {
+                // If the light cannot refract and performs regular reflection:
+                reflect_vector(&ray_in.direction, &normal.unit_vector())
+            }
+        };
 
         let ray = Ray {
             origin: ray_in.at(hit.t),
