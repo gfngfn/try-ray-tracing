@@ -112,7 +112,14 @@ fn main() {
             z: -1.,
         },
         radius: 0.5,
-        material: Box::new(Glass { eta: 1.5 }),
+        material: Box::new(Glass {
+            eta: 1.5,
+            albedo: Attenuation {
+                r: 0.9,
+                g: 0.9,
+                b: 0.7,
+            },
+        }),
     };
     let ground = Sphere {
         center: Point3 {

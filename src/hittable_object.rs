@@ -63,6 +63,7 @@ impl Clone for BoxedMaterial {
 #[derive(Clone)]
 pub struct Glass {
     pub eta: f64,
+    pub albedo: Attenuation,
 }
 impl Material for Glass {
     fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
@@ -96,12 +97,7 @@ impl Material for Glass {
             origin: ray_in.at(hit.t),
             direction: direction_out,
         };
-        let attenuation = Attenuation {
-            r: 1.,
-            g: 1.,
-            b: 1.,
-        }; // TODO: generalize this
-        (attenuation, ray)
+        (self.albedo.clone(), ray)
     }
 }
 
