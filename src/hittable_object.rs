@@ -122,6 +122,8 @@ pub struct Sphere {
 }
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray) -> Option<(HitRecord, Box<dyn Material>)> {
+        let t_min = 0.01; // This should be set in order for rays after reflection not to hit the sphere itself.
+
         let center = &self.center;
         let radius = &self.radius;
 
@@ -140,20 +142,23 @@ impl Hittable for Sphere {
         let c = v.length_squared() - radius * radius;
         let discriminant_quarter = b_half * b_half - c;
         let t_opt = {
-            if discriminant_quarter <= 0. {
+            if discriminant_quarter < 0. {
+                // If the ray does not hit the object at any point:
                 None
             } else {
                 let sqrt_of_discriminant_quarter = discriminant_quarter.sqrt();
                 let t_minus = -b_half - sqrt_of_discriminant_quarter;
-                if t_minus < 0. {
-                    let t_plus = -b_half + sqrt_of_discriminant_quarter;
-                    if t_plus < 0. {
-                        None
-                    } else {
-                        Some(t_plus)
-                    }
-                } else {
+                if t_minus >= t_min {
+                    // If the ray hits the surface from the outside:
                     Some(t_minus)
+                } else {
+                    let t_plus = -b_half + sqrt_of_discriminant_quarter;
+                    if t_plus >= t_min {
+                        // If the ray hits the surface from the inside:
+                        Some(t_plus)
+                    } else {
+                        None
+                    }
                 }
             }
         };
