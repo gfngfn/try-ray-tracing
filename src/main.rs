@@ -5,7 +5,7 @@ mod hittable_object;
 
 use camera::Camera;
 use color::{Attenuation, Color};
-use geometry::{random_double, Point3, Ray};
+use geometry::{random_double, Point3, Ray, Vec3};
 use hittable_object::{Glass, Hittable, HittableList, Lambertian, Metal, Sphere};
 
 fn ray_background_color(ray: &Ray) -> Color {
@@ -63,10 +63,21 @@ fn main() {
         y: 0.,
         z: 0.,
     };
-    let viewport_height: f64 = 2.0;
-    let focal_length: f64 = 1.0;
+    let look_in = Vec3 {
+        x: 0.,
+        y: 0.,
+        z: -1.,
+    }
+    .unit_vector();
+    let view_up = Vec3 {
+        x: 0.,
+        y: 1.,
+        z: 0.,
+    };
 
-    let camera = Camera::new(aspect_ratio, origin, viewport_height, focal_length);
+    let vertical_fov_radian = std::f64::consts::PI / 2.;
+
+    let camera = Camera::new(origin, look_in, view_up, vertical_fov_radian, aspect_ratio);
 
     // Constants for antialiasing:
     let num_samples_per_pixel = 10;

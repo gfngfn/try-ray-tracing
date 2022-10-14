@@ -348,9 +348,20 @@ mod tests {
         }
     }
 
+    fn make_dummy_attenuation() -> Attenuation {
+        Attenuation {
+            r: 0.8,
+            g: 0.8,
+            b: 0.8,
+        }
+    }
+
     #[test]
     fn glass_scatter_test1() {
-        let glass = Glass { eta: 1.0 };
+        let glass = Glass {
+            eta: 1.0,
+            albedo: make_dummy_attenuation(),
+        };
         let ray_in = Ray {
             origin: Point3 {
                 x: -3.,
@@ -392,7 +403,10 @@ mod tests {
 
     #[test]
     fn glass_scatter_test2() {
-        let glass = Glass { eta: 3f64.sqrt() };
+        let glass = Glass {
+            eta: 3f64.sqrt(),
+            albedo: make_dummy_attenuation(),
+        };
         let ray_in = Ray {
             origin: Point3 {
                 x: -3f64.sqrt(),
@@ -434,7 +448,10 @@ mod tests {
 
     #[test]
     fn glass_scatter_test3() {
-        let glass = Glass { eta: 3f64.sqrt() };
+        let glass = Glass {
+            eta: 3f64.sqrt(),
+            albedo: make_dummy_attenuation(),
+        };
         let ray_in = Ray {
             origin: Point3 {
                 x: -1.,

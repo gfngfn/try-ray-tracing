@@ -56,6 +56,14 @@ impl Vec3 {
     pub fn inner_product(&self, v: &Self) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
+
+    pub fn cross_product(&self, v: &Self) -> Self {
+        Vec3 {
+            x: self.y * v.z - self.z * v.y,
+            y: self.z * v.x - self.x * v.z,
+            z: self.x * v.y - self.y * v.x,
+        }
+    }
 }
 
 /// The type for representing 3D unit vectors (i.e. 3D vectors with their length 1)
@@ -198,7 +206,25 @@ mod tests {
                 z: 0.,
             },
             v3.unit_vector().inject()
-        )
+        );
+        let v4 = Vec3 {
+            x: 1.,
+            y: 0.,
+            z: 0.,
+        };
+        let v5 = Vec3 {
+            x: 0.,
+            y: 1.,
+            z: 0.,
+        };
+        assert_eq!(
+            Vec3 {
+                x: 0.,
+                y: 0.,
+                z: 1.,
+            },
+            v4.cross_product(&v5),
+        );
     }
 
     #[test]
