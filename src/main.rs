@@ -121,7 +121,7 @@ fn main() {
         center: Point3 {
             x: 0.,
             y: 0.,
-            z: -1.24,
+            z: -1.,
         },
         radius: 0.5,
         material: Box::new(Glass {
@@ -129,7 +129,7 @@ fn main() {
             albedo: Attenuation {
                 r: 0.9,
                 g: 0.9,
-                b: 0.7,
+                b: 0.9,
             },
         }),
     };

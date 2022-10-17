@@ -3,7 +3,7 @@ extern crate dyn_clone;
 use dyn_clone::DynClone;
 
 use crate::color::Attenuation;
-use crate::geometry::{random_unit_vector, reflect_vector, Point3, Ray, UnitVec3};
+use crate::geometry::{random_double, random_unit_vector, reflect_vector, Point3, Ray, UnitVec3};
 
 /// The type for intersection points; see `Hittable` for the usage of this type.
 #[derive(Clone, Debug, PartialEq)]
@@ -63,6 +63,12 @@ impl Clone for BoxedMaterial {
     }
 }
 
+fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+    let r0 = (1. - refraction_index) / (1. + refraction_index);
+    let r1 = r0 * r0;
+    r1 + (1. - r1) * (1. - cosine).powi(5)
+}
+
 /// The type for glasses, i.e., materials that perform refraction.
 /// The parameter `eta` is the refractive index and should >= 1.
 #[derive(Clone)]
@@ -100,16 +106,19 @@ impl Material for Glass {
             if coeff_normal >= 0. {
                 // If the light can refract:
 
-                // d' = v' - sqrt(c) n
-                vp_out
-                    .subtract(&normal.scale(coeff_normal.sqrt()))
-                    .unit_vector()
+                if reflectance(-inprod, eta_in / eta_out) > random_double() {
+                    reflect_vector(&ray_in.direction, &normal.unit_vector())
+                } else {
+                    // d' = v' - sqrt(c) n
+                    vp_out
+                        .subtract(&normal.scale(coeff_normal.sqrt()))
+                        .unit_vector()
+                }
             } else {
                 // If the light cannot refract and performs regular reflection:
                 reflect_vector(&ray_in.direction, &normal.unit_vector())
             }
         };
-
         let ray = Ray {
             origin: ray_in.at(hit.t),
             direction: direction_out,
