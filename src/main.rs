@@ -75,7 +75,7 @@ fn main() {
         z: 0.,
     };
 
-    let vertical_fov_radian = std::f64::consts::PI / 2.;
+    let vertical_fov_radian = std::f64::consts::PI / 1.5;
 
     let camera = Camera::new(origin, look_in, view_up, vertical_fov_radian, aspect_ratio);
 
@@ -114,6 +114,7 @@ fn main() {
                 g: 0.5,
                 b: 0.5,
             },
+            fuzz: 0.3,
         }),
     };
     let sphere3 = Sphere {

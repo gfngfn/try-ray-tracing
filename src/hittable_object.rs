@@ -39,10 +39,15 @@ impl Material for Lambertian {
 #[derive(Clone)]
 pub struct Metal {
     pub albedo: Attenuation,
+    pub fuzz: f64,
 }
 impl Material for Metal {
     fn scatter(&self, ray_in: &Ray, hit: &HitRecord) -> (Attenuation, Ray) {
-        let direction = reflect_vector(&ray_in.direction, &hit.surface_normal);
+        let direction_raw = reflect_vector(&ray_in.direction, &hit.surface_normal);
+        let direction = direction_raw
+            .inject()
+            .add(&random_unit_vector().inject().scale(self.fuzz))
+            .unit_vector();
         let child_ray = Ray {
             origin: ray_in.at(hit.t),
             direction,
